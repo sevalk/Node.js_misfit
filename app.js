@@ -1,6 +1,9 @@
 const express = require('express');
 const mongoose = require("mongoose");
 const pageRoute = require('./routes/pageRoute');
+const userRoute = require('./routes/userRoute');
+const session = require('express-session');
+const MongoStore = require('connect-mongo');
 
 const app = express();
 
@@ -18,6 +21,8 @@ mongoose.connect('mongodb://localhost/misfit_db', {
 app.set('view engine', 'ejs');
 
 
+//Global veriables
+global.userIN = null;
 
 
 //Middlewares
@@ -25,10 +30,23 @@ app.set('view engine', 'ejs');
 app.use(express.static('public'));
 app.use(express.json()); // for parsing application/json
 app.use(express.urlencoded({ extended: true })); // for parsing application/x-www-form-urlencoded
+app.use(
+  session({
+    secret: 'my_keyboard_cat',
+    resave: false,
+    saveUninitialized: true,
+    store: MongoStore.create({ mongoUrl: 'mongodb://localhost/misfit_db' }),
+  })
+);
+app.use('*', (req, res, next) => {
+  userIN = req.session.userID;
+  next();
+});
 
 
 
 app.use('/', pageRoute);
+app.use('/users', userRoute);
 
 
 const port = 3000;
